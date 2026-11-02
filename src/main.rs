@@ -1,14 +1,23 @@
 use anyhow::Result;
 use clap::Parser;
+use rust_network_scanner::api::run_server;
 use rust_network_scanner::scanner::{NetworkScanner, HostResult};
 use tracing::{info, Level};
 use tracing_subscriber;
 
 #[derive(Parser)]
 #[command(name = "network-scanner")]
-#[command(about = "Network scanner that discovers gateway, network, and scans for active hosts")]
+#[command(about = "Network scanner with REST API - discovers gateway, network, and scans for active hosts")]
 #[command(version)]
 struct Cli {
+    /// Run in server mode (REST API)
+    #[arg(short, long)]
+    server: bool,
+
+    /// Port to run the server on
+    #[arg(short, long, default_value = "8080")]
+    port: u16,
+
     /// Output format (text, json)
     #[arg(short, long, default_value = "text")]
     format: String,
@@ -40,8 +49,18 @@ async fn main() -> Result<()> {
         .with_max_level(level)
         .init();
 
-    info!("Starting Network Scanner");
+    if cli.server {
+        info!("Starting Network Scanner in server mode");
+        run_server(cli.port).await?;
+    } else {
+        info!("Starting Network Scanner in CLI mode");
+        run_cli(cli).await?;
+    }
 
+    Ok(())
+}
+
+async fn run_cli(cli: Cli) -> Result<()> {
     let scanner = NetworkScanner::new();
 
     // Discover network configuration

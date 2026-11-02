@@ -39,6 +39,7 @@ pub struct HostResult {
     pub mac_address: Option<String>,
 }
 
+#[derive(Debug, Clone)]
 pub struct NetworkScanner;
 
 impl NetworkScanner {
